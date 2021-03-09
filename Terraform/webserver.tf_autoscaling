@@ -1,0 +1,87 @@
+data "aws_availability_zones" "all" {}
+data "aws_subnet_ids" "vpc_ids" {
+  vpc_id = "${aws_vpc.demo_vpc.id}"
+  filter {
+    name   = "tag:Name"
+    values = ["demo-pub-subnet-1", "demo-pub-subnet-2", "demo-pub-subnet-3"] # insert values here
+  }
+}
+
+resource "aws_key_pair" "auth" {
+  key_name   = "${var.key_name}"
+  public_key = "${file(var.public_key_path)}"
+}
+
+resource "aws_launch_configuration" "demo_webserver_launch_conf" {
+  image_id        = "ami-057b5bb96e862d82e"
+  instance_type   = "t2.medium"
+  security_groups = ["${aws_security_group.demo_web_sg.id}"]
+  key_name = "${aws_key_pair.auth.id}"
+  user_data = <<-EOF
+              #!/bin/bash
+                  sudo su
+                  sudo amazon-linux-extras install nginx
+                  echo "<p> My Instance! </p>" >> /var/www/html/index.html
+                  sudo systemctl enable nginx
+                  sudo systemctl start nginx
+              EOF
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+resource "aws_autoscaling_group" "demo_as_group" {
+  launch_configuration = "${aws_launch_configuration.demo_webserver_launch_conf.id}"
+  vpc_zone_identifier = ["${data.aws_subnet_ids.vpc_ids.ids}"]
+#subnets = ["${data.aws_subnet_ids.vpc_ids.ids}"]
+ #availability_zones   = ["${data.aws_availability_zones.all.names}"]
+  min_size             = 2
+  max_size             = 3
+  desired_capacity     = 2
+
+  load_balancers      = ["${aws_elb.demo_elb.name}"]
+  health_check_type   = "ELB"
+
+  tag {
+    key                 = "Name"
+    value               = "demo-as-group"
+    propagate_at_launch = true  
+}
+}
+
+resource "aws_elb" "demo_elb" {
+  name               = "demo-elb"
+  security_groups    = ["${aws_security_group.demo_web_sg.id}"]
+  subnets = ["${data.aws_subnet_ids.vpc_ids.ids}"]
+#  availability_zones = ["${data.aws_availability_zones.all.names}"]
+
+  health_check {
+    target              = "HTTP:${var.server_http_port}/"
+    interval            = "300"
+    timeout             = "3"
+    healthy_threshold   = "2"
+    unhealthy_threshold = "2"
+  }
+
+  listener {
+    lb_port           = "${var.elb_http_port}"
+    lb_protocol       = "http"
+    instance_port     = "${var.server_http_port}"
+    instance_protocol = "http"
+  }
+
+  listener {
+    lb_port            = "${var.elb_https_port}"
+    lb_protocol        = "https"
+    instance_port      = "${var.server_https_port}"
+    instance_protocol  = "https"
+    ssl_certificate_id = "${aws_acm_certificate.demo_cert.id}"
+  }
+}
+
+resource "aws_acm_certificate" "demo_cert" {
+  private_key      = "${file(var.private_key)}"
+  certificate_body = "${file(var.cert)}"
+}
+
