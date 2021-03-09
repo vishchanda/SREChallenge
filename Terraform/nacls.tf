@@ -106,7 +106,7 @@ resource "aws_network_acl" "demo_pub_acl" {
     protocol   = "tcp"
     rule_no    = 120
     action     = "allow"
-    cidr_block = "139.55.212.87/32"
+    cidr_block = ""
     from_port  = 22
     to_port    = 22
   }
