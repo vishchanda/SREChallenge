@@ -1,3 +1,4 @@
+#!/bin/python3
 # Enter your code here. Read input from STDIN. Print output to STDOUT
 import re, sys
 def check_consecutive_occurance(string):
