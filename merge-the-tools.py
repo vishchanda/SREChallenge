@@ -1,3 +1,4 @@
+#!/bin/python3
 def merge_the_tools(string, k):
     # your code goes here
     if ((1<=len(string)<=(10**4)) and (1<=k<=len(string)) and ((len(string)%k)==0)):
