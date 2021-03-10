@@ -24,7 +24,7 @@ resource "aws_instance" "demo_web_server" {
   }
 
 provisioner "remote-exec" {
-    inline = ["yum-config-manager --save --setopt=<repoid>.skip_if_unavailable=true", "sudo yum clean all", "sleep 60",  "sudo yum update -y", "sleep 60", "sudo yum install python -y"]
+    inline = ["sudo yum clean all", "sleep 60",  "sudo yum update -y", "sleep 60", "sudo yum install python -y"]
   }
 
 provisioner "local-exec" {
