@@ -1,11 +1,3 @@
-
-data "aws_subnet_ids" "vpc_ids" {
-  vpc_id = "${aws_vpc.demo_vpc.id}"
-  filter {
-    name   = "tag:Name"
-    values = ["demo-pub-subnet-1"] # insert values here
-  }
-}
 resource "aws_acm_certificate" "demo_cert" {
   private_key      = "${file(var.private_key)}"
   certificate_body = "${file(var.cert)}"
