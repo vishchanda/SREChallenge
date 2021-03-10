@@ -13,23 +13,17 @@
         name: "nginx"
         state: "present"
     - name: Insert Index Page
-      #delegate_to: localhost
       copy:
         src: "index.html"
         dest: "/usr/share/nginx/html/index.html"
-       # remote_src: "no"
     - name: Copy confog file
-      #delegate_to: localhost
       copy:
         src: "nginx.conf"
         dest: "/etc/nginx/nginx.conf"
-       # remote_src: "no"
     - name: Copy Certificates
-      #delegate_to: localhost
       copy:
         src: "{{ item }}"
         dest: "/etc/pki/nginx/"
-       # remote_src: "no"
       with_fileglob:
         - "demo*"
     - name: Start NGiNX
